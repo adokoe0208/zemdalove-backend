@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZemdaLove - Rencontre Togo</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>ZemdaLove</h1>
+    <nav>
+      <a href="#signup">Inscription</a>
+      <a href="#login">Connexion</a>
+    </nav>
+  </header>
+
+  <main>
+    <section id="intro">
+      <h2>Bienvenue sur ZemdaLove</h2>
+      <p>La plateforme togolaise pour rencontrer l'amour en ligne et en présence ♥</p>
+    </section>
+
+    <section id="signup">
+      <h3>Inscription</h3>
+      <form id="signupForm">
+        <input type="text" name="username" placeholder="Nom d'utilisateur" required />
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Mot de passe" required />
+        <button type="submit">S'inscrire</button>
+      </form>
+      <div id="signupResult"></div>
+    </section>
+
+    <section id="login">
+      <h3>Connexion</h3>
+      <form id="loginForm">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Mot de passe" required />
+        <button type="submit">Se connecter</button>
+      </form>
+      <div id="loginResult"></div>
+    </section>
+
+    <section id="chat" style="display:none">
+      <h3>Messagerie</h3>
+      <div id="chatBox"></div>
+      <form id="messageForm">
+        <input type="text" name="message" placeholder="Votre message..." required />
+        <button type="submit">Envoyer</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const API_URL = "https://zemdalove-backend.onrender.com/api";
+
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        username: form.username.value,
+        email: form.email.value,
+        password: form.password.value,
+      };
+      const res = await fetch(`${API_URL}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      document.getElementById("signupResult").innerText = result.message || "Inscription terminée.";
+    });
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        email: form.email.value,
+        password: form.password.value,
+      };
+      const res = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      if (result.token) {
+        localStorage.setItem("token", result.token);
+        document.getElementById("loginResult").innerText = "Connecté avec succès !";
+        document.getElementById("chat").style.display = "block";
+      } else {
+        document.getElementById("loginResult").innerText = result.message || "Erreur de connexion.";
+      }
+    });
+
+    document.getElementById("messageForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem("token");
+      const message = e.target.message.value;
+      const res = await fetch(`${API_URL}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ content: message }),
+      });
+      const result = await res.json();
+      document.getElementById("chatBox").innerHTML += `<p><strong>Moi:</strong> ${result.content}</p>`;
+      e.target.reset();
+    });
+  </script>
+</body>
+</html>
